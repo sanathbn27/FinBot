@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 
+
 def show_chatbot(BACKEND_URL):
     st.header("💬 FinBot Chat Assistant")
 
@@ -16,8 +17,7 @@ def show_chatbot(BACKEND_URL):
     # -------------------------
     with st.form("chat_form", clear_on_submit=True):
         user_input = st.text_input(
-            "Ask FinBot about crypto trends or prices:",
-            key="pending_user_input"
+            "Ask FinBot about crypto trends or prices:", key="pending_user_input"
         )
         submitted = st.form_submit_button("Send")
 
@@ -40,10 +40,9 @@ def show_chatbot(BACKEND_URL):
                 reply = f"Error: {e}"
 
             # Save FinBot reply
-            st.session_state.chat_history.append({
-                                                    "question": user_input,
-                                                    "answer": reply
-                                                })
+            st.session_state.chat_history.append(
+                {"question": user_input, "answer": reply}
+            )
 
     st.markdown("---")
 

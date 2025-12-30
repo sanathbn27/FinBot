@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 
+
 def show_dashboard(BACKEND_URL):
     st.title("📊 Crypto Market Dashboard")
 
@@ -11,7 +12,9 @@ def show_dashboard(BACKEND_URL):
 
     if st.button("Get Data"):
         try:
-            res = requests.get(f"{BACKEND_URL}/history/{coin}?vs_currency={vs_currency}&days={days}")
+            res = requests.get(
+                f"{BACKEND_URL}/history/{coin}?vs_currency={vs_currency}&days={days}"
+            )
             res.raise_for_status()
             data = res.json()
 
@@ -43,7 +46,6 @@ def show_dashboard(BACKEND_URL):
             else:
                 trend = " -> SIDEWAYS"
 
-
             # --- Main Price Chart with SMA Overlay ---
             st.subheader("Price Chart with Moving Averages")
             st.line_chart(df[["price", "SMA7", "SMA14"]])
@@ -64,10 +66,18 @@ def show_dashboard(BACKEND_URL):
                 col3, col4 = st.columns(2)
                 col5, _ = st.columns(2)
 
-                col1.metric("First Price", f"{float(analysis['first_price']):,.2f} {vs_currency.upper()}")
-                col2.metric("Last Price", f"{float(analysis['last_price']):,.2f} {vs_currency.upper()}")
+                col1.metric(
+                    "First Price",
+                    f"{float(analysis['first_price']):,.2f} {vs_currency.upper()}",
+                )
+                col2.metric(
+                    "Last Price",
+                    f"{float(analysis['last_price']):,.2f} {vs_currency.upper()}",
+                )
                 col3.metric("Change (%)", f"{float(analysis['pct_change']):.2f}%")
-                col4.metric("Volatility (5-period)", f"{float(df['volatility'].iloc[-1]):.2f}%")
+                col4.metric(
+                    "Volatility (5-period)", f"{float(df['volatility'].iloc[-1]):.2f}%"
+                )
                 # trend_display = " UP" if trend == "UP" else "📉 DOWN"
                 col5.metric("Trend", trend)
             else:

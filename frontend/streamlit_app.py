@@ -7,6 +7,7 @@ BACKEND_URL = "http://127.0.0.1:8000"
 st.sidebar.title("FinBot Navigation")
 page = st.sidebar.radio("Go to:", ["Dashboard", "Chatbot"])
 
+
 if page == "Dashboard":
     show_dashboard(BACKEND_URL)
 elif page == "Chatbot":

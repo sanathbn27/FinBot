@@ -15,9 +15,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
 
 @app.post("/price")
 async def price(req: PriceRequest):
@@ -27,6 +29,7 @@ async def price(req: PriceRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/history/{coin_id}")
 async def history(coin_id: str, vs_currency: str = "usd", days: int = 7):
     try:
@@ -34,5 +37,6 @@ async def history(coin_id: str, vs_currency: str = "usd", days: int = 7):
         return {"prices": points, "analysis": analysis.dict() if analysis else {}}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 app.include_router(chat_router)

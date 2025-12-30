@@ -1,4 +1,3 @@
-# backend/app/chat_service/extractor.py
 import json
 import re
 import httpx
@@ -25,9 +24,19 @@ CURRENCY_ALIASES = {
 }
 INTENT_KEYWORDS = {
     "price": ["price", "rate", "cost", "value", "quote"],
-    "trend": ["trend", "direction", "moving", "momentum", "going", "up or down", "up/down", "up or down"],
+    "trend": [
+        "trend",
+        "direction",
+        "moving",
+        "momentum",
+        "going",
+        "up or down",
+        "up/down",
+        "up or down",
+    ],
     "summary": ["summary", "summarize", "overview", "overview of", "what happened"],
 }
+
 
 async def _llm_extract_json(user_text: str, timeout: int = 20) -> Dict[str, Any]:
     """
@@ -35,24 +44,26 @@ async def _llm_extract_json(user_text: str, timeout: int = 20) -> Dict[str, Any]
     It MUST return strict JSON (no commentary). We parse it.
     """
     prompt = f"""
-You are a small extraction assistant. Extract the following fields from the user's question and return ONLY valid JSON (no explanation, no extra text):
+            You are a small extraction assistant. Extract the following fields from the user's question and return ONLY valid JSON (no explanation, no extra text):
 
-Fields:
-- coin: one of ["bitcoin","ethereum","solana"]
-- currency: one of ["usd","inr","eur"]
-- intent: one of ["price","trend","summary","general"]
+            Fields:
+            - coin: one of ["bitcoin","ethereum","solana"]
+            - currency: one of ["usd","inr","eur"]
+            - intent: one of ["price","trend","summary","general"]
 
-Rules:
-- If coin is not mentioned, default to "bitcoin".
-- If currency is not mentioned, default to "usd".
-- If intent is unclear, choose "general".
-- Output only valid JSON, no code fences.
+            Rules:
+            - If coin is not mentioned, default to "bitcoin".
+            - If currency is not mentioned, default to "usd".
+            - If intent is unclear, choose "general".
+            - Output only valid JSON, no code fences.
 
-User question:
-\"\"\"{user_text}\"\"\"
-"""
+            User question:
+            \"\"\"{user_text}\"\"\"
+            """
     async with httpx.AsyncClient(timeout=timeout) as client:
-        resp = await client.post(OLLAMA_API, json={"model": MODEL_NAME, "prompt": prompt, "stream": False})
+        resp = await client.post(
+            OLLAMA_API, json={"model": MODEL_NAME, "prompt": prompt, "stream": False}
+        )
         resp.raise_for_status()
         data = resp.json()
         # best-effort extraction of returned text
@@ -68,7 +79,7 @@ User question:
         start = raw.find("{")
         end = raw.rfind("}")
         if start != -1 and end != -1 and end > start:
-            json_text = raw[start:end+1]
+            json_text = raw[start : end + 1]
             parsed = json.loads(json_text)
             return parsed
     except Exception:
@@ -76,6 +87,7 @@ User question:
 
     # if LLM failed to give valid JSON, return empty -> fallback
     return {}
+
 
 def _regex_fallback(user_text: str) -> Dict[str, str]:
     text = user_text.lower()
@@ -118,7 +130,11 @@ def _regex_fallback(user_text: str) -> Dict[str, str]:
     if not detected_intent:
         detected_intent = "general"
 
-    return {"coin": detected_coin, "currency": detected_currency, "intent": detected_intent}
+    return {
+        "coin": detected_coin,
+        "currency": detected_currency,
+        "intent": detected_intent,
+    }
 
 
 async def extract(user_text: str) -> Tuple[str, str, str]:
@@ -128,9 +144,21 @@ async def extract(user_text: str) -> Tuple[str, str, str]:
     try:
         parsed = await _llm_extract_json(user_text)
         if parsed:
-            coin = parsed.get("coin", "").lower() if isinstance(parsed.get("coin", ""), str) else ""
-            currency = parsed.get("currency", "").lower() if isinstance(parsed.get("currency", ""), str) else ""
-            intent = parsed.get("intent", "").lower() if isinstance(parsed.get("intent", ""), str) else ""
+            coin = (
+                parsed.get("coin", "").lower()
+                if isinstance(parsed.get("coin", ""), str)
+                else ""
+            )
+            currency = (
+                parsed.get("currency", "").lower()
+                if isinstance(parsed.get("currency", ""), str)
+                else ""
+            )
+            intent = (
+                parsed.get("intent", "").lower()
+                if isinstance(parsed.get("intent", ""), str)
+                else ""
+            )
             # validate
             if coin not in COINS:
                 coin = ""
