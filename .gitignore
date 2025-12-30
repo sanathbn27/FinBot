@@ -5,3 +5,8 @@ venv/
 .env.* 
 .DS_Store
 .streamlit/
+*.pyc
+.vscode/
+.env
+*__pycache__/
+.finbot_env/

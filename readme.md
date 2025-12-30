@@ -152,7 +152,7 @@ df["SMA14"] = df["price"].rolling(14).mean()
 <img src="./pictures/dashboard_1.png" width="650">
 
 ### 2. Real-Time Crypto Dashboard
-<img src="./pictures/chatbot.png" width="650">
+<img src="./pictures/dashboard_2.png" width="650">
 
 ### 3. Crypto Chatbot with LLM
 <img src="./pictures/AI_chatAssistance.png" width="650">
