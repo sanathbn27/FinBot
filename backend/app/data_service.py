@@ -4,6 +4,7 @@ from .models import AnalysisResult
 
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
+
 async def fetch_simple_price(ids, vs_currencies):
     """
     Fetch current price data for given crypto IDs from CoinGecko.
@@ -14,7 +15,8 @@ async def fetch_simple_price(ids, vs_currencies):
     async with httpx.AsyncClient(timeout=20) as client:
         resp = await client.get(url)
         resp.raise_for_status()
-        return resp.json()   
+        return resp.json()
+
 
 async def fetch_market_history(coin_id: str, vs_currency="usd", days=7):
     """
@@ -35,18 +37,20 @@ async def fetch_market_history(coin_id: str, vs_currency="usd", days=7):
     # Convert to DataFrame for analysis
     df = pd.DataFrame(prices, columns=["ts_ms", "price"])
     df["ts"] = pd.to_datetime(df["ts_ms"], unit="ms")
-    #Take mean for every interval to reduce noise and also easy to plot
-    df = df.set_index("ts").resample("1H").mean().ffill()
+    # Take mean for every interval to reduce noise and also easy to plot
+    df = df.set_index("ts").resample("1h").mean().ffill()
 
     first_price = float(df["price"].iloc[0])
     last_price = float(df["price"].iloc[-1])
-    pct_change = ((last_price - first_price) / first_price) * 100 if first_price != 0 else None
+    pct_change = (
+        ((last_price - first_price) / first_price) * 100 if first_price != 0 else None
+    )
 
     analysis = AnalysisResult(
         first_price=round(first_price, 4),
         last_price=round(last_price, 4),
         pct_change=round(pct_change, 3) if pct_change else None,
-        points=len(df)
+        points=len(df),
     )
 
     # Convert subset for plotting

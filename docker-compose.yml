@@ -1,0 +1,41 @@
+# docker-compose.yml
+# Runs both the FastAPI backend and Streamlit frontend in containers.
+# Usage:
+#   docker-compose up --build
+#
+# Make sure you have a .env file at the repo root (copy from .env.example).
+
+version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # CORS: allow the frontend container (and localhost for testing)
+      ALLOWED_ORIGINS: "http://localhost:8501,http://127.0.0.1:8501,http://frontend:8501"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile_frontend
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      # Inside Docker, the frontend reaches the backend via the service name
+      BACKEND_URL: "http://backend:8000"
+    depends_on:
+      - backend

@@ -1,0 +1,20 @@
+# Dockerfile.frontend
+# Builds the Streamlit frontend (Groq version)
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy frontend source
+COPY frontend/ ./frontend/
+
+WORKDIR /app/frontend
+
+EXPOSE 8501
+
+# Run the Groq-enabled Streamlit app
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
