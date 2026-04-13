@@ -1,24 +1,57 @@
 import httpx
 import pandas as pd
 from .models import AnalysisResult
+import time
 
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
 _cache = {}
-CACHE_TTL = 60
+CACHE_TTL = 120
 
 
 async def fetch_simple_price(ids, vs_currencies):
-    """
-    Fetch current price data for given crypto IDs from CoinGecko.
-    """
     ids_str = ",".join(ids)
     vs_str = ",".join(vs_currencies)
+
+    cache_key = f"price_{ids_str}_{vs_str}"
+    now = time.time()
+
+    # Cache check
+    if cache_key in _cache:
+        cached_time, cached_data = _cache[cache_key]
+        if now - cached_time < CACHE_TTL:
+            return cached_data
+
     url = f"{COINGECKO_BASE}/simple/price?ids={ids_str}&vs_currencies={vs_str}"
-    async with httpx.AsyncClient(timeout=20) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        return resp.json()
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                url, headers={"User-Agent": "finbot/1.0", "Accept": "application/json"}
+            )
+
+            if resp.status_code == 429:
+                print("CoinGecko rate limit hit")
+                raise Exception("rate_limited")
+
+            if resp.status_code != 200:
+                print("CoinGecko error:", resp.status_code, resp.text)
+                raise Exception("coingecko_failed")
+
+            data = resp.json()
+
+            # Store cache
+            _cache[cache_key] = (now, data)
+
+            return data
+
+    except Exception as e:
+        # fallback to cache
+        if cache_key in _cache:
+            print("Using cached price data")
+            return _cache[cache_key][1]
+
+        raise e
 
 
 async def fetch_market_history(coin_id: str, vs_currency="usd", days=7):
@@ -38,8 +71,18 @@ async def fetch_market_history(coin_id: str, vs_currency="usd", days=7):
 
     url = f"{COINGECKO_BASE}/coins/{coin_id}/market_chart?vs_currency={vs_currency}&days={days}"
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
+        resp = await client.get(
+            url, headers={"User-Agent": "finbot/1.0", "Accept": "application/json"}
+        )
+
+        if resp.status_code == 429:
+            print("Rate limit hit (history)")
+            raise Exception("rate_limited")
+
+        if resp.status_code != 200:
+            print("Error:", resp.status_code, resp.text)
+            raise Exception("coingecko_failed")
+
         data = resp.json()
 
     # Extract price points: [ [timestamp_ms, price], ... ]
