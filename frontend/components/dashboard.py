@@ -83,4 +83,6 @@ def show_dashboard(BACKEND_URL):
             else:
                 st.info("No analysis available.")
         except Exception as e:
-            st.error(f"Error fetching data: {e}")
+            st.warning(
+                "⚠️ Too many requests — CoinGecko free API has rate limits. Please wait 10-15 seconds and try again."
+            )

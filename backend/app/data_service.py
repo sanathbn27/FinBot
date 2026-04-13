@@ -4,6 +4,9 @@ from .models import AnalysisResult
 
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
+_cache = {}
+CACHE_TTL = 60
+
 
 async def fetch_simple_price(ids, vs_currencies):
     """
@@ -23,6 +26,16 @@ async def fetch_market_history(coin_id: str, vs_currency="usd", days=7):
     Fetch historical market data (prices) for a given coin and period.
     Uses CoinGecko's market_chart endpoint.
     """
+
+    cache_key = f"{coin_id}_{vs_currency}_{days}"
+    now = time.time()
+
+    # Return cached result if fresh
+    if cache_key in _cache:
+        cached_time, cached_data = _cache[cache_key]
+        if now - cached_time < CACHE_TTL:
+            return cached_data
+
     url = f"{COINGECKO_BASE}/coins/{coin_id}/market_chart?vs_currency={vs_currency}&days={days}"
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.get(url)
@@ -55,5 +68,7 @@ async def fetch_market_history(coin_id: str, vs_currency="usd", days=7):
 
     # Convert subset for plotting
     points = df.reset_index()[["ts", "price"]].tail(200).to_dict(orient="records")
+
+    _cache[cache_key] = (now, (points, analysis))
 
     return points, analysis

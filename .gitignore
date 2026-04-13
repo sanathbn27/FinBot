@@ -10,3 +10,4 @@ venv/
 .env
 *__pycache__/
 .finbot_env/
+__pycache__/
